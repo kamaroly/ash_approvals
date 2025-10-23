@@ -37,10 +37,17 @@ defmodule AshApprovalsTest do
     end
   end
 
-  test "greets the world" do
-    Category
-    |> Ash.Changeset.for_create(:create, %{name: "Cat 1"})
-    |> Ash.create!()
-    |> dbg()
+  test "Create does not persist data" do
+    {:ok, record} =
+      Category
+      |> Ash.Changeset.for_create(:create, %{name: "Cat 1"})
+      |> Ash.create()
+
+    # Confirm nothing was saved in the databse
+    require Ash.Query
+
+    refute Category
+           |> Ash.Query.filter(id == ^record.id)
+           |> Ash.exists?()
   end
 end
