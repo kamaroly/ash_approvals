@@ -18,7 +18,51 @@ Steps:
 7. If one of the approvers reject the change request, then stop there
 8. Notify the initiator
 
-## Requirements 
+## Entity Relationship Diagram
+
+### change_requests
+
+| Field                   | Type      | Description                          | Key       |
+|-------------------------|-----------|--------------------------------------|-----------|
+| id                      | Integer   | The id of the request                | Primary   |
+| change_request_type_id  | Integer   | one of create, update, or destroy    | Foreign (references change_request_types.id) |
+| initiated_by_user_id    | Integer   | Actor who initiated the requests     | Foreign (references users.id, assumed) |
+| requested_change        | Text      | serialised requested change          |           |
+| status                  | Enum      | One of: Pending, Approved, Rejected, Expired |           |
+| inserted_at             | Timestamp | date and time of request creation    |           |
+| updated_at              | Timestamp | date and time of request update      |           |
+
+### change_request_types
+
+| Field                       | Type      | Description                                      | Key       |
+|-----------------------------|-----------|--------------------------------------------------|-----------|
+| id                          | Integer   | The ID of the change request type                | Primary   |
+| name                        | String    | The name describing the change request           |           |
+| description                 | Text      | Addition details for this change request         |           |
+| request_approval_message    | Text      | The message for requesting approval              |           |
+| request_approved_message    | Text      | The message to send to the initiator on request approval |           |
+| request_rejected_message    | Text      | The message to send to the initiator on request rejected |           |
+
+### change_request_type_workflows
+
+| Field                   | Type      | Description                                      | Key       |
+|-------------------------|-----------|--------------------------------------------------|-----------|
+| id                      | Integer   | The ID of the workflow                           | Primary   |
+| change_request_type_id  | Integer   | The Resource name of the change request          | Foreign (references change_request_types.id) |
+| status                  | Enum      | The status of this approval requests             |           |
+| step                    | Integer   | Order number of the step to change               |           |
+| approver_id             | Integer   | The actor ID Of the user approving               | Foreign (references users.id, assumed) |
+| approver_type           | Enum      | The type of the approver(User, Group or others)  |           |
+| inserted_at             | Timestamp | date and time of request creation                |           |
+| updated_at              | Timestamp | date and time of request update                  |           |
+
+### Relationships
+
+- **change_requests** (many) → **change_request_types** (one): Via change_request_type_id (one-to-many)
+- **change_request_type_workflows** (many) → **change_request_types** (one): Via change_request_type_id (one-to-many)
+- Assumed external references to a users table for initiated_by_user_id and approver_id (not detailed in provided schema)
+
+## Requirements
 
 For this to work effectively, the following resources must be available
 
