@@ -18,13 +18,6 @@ Steps:
 7. If one of the approvers reject the change request, then stop there
 8. Notify the initiator
 
-## What does this extension add
-
-1. Add `change_request_status` attribute to the resource
-2. Add `change_request_initiated_by` attribute to the resourcce
-3. Add `change_request_effected_at` attribute to the resource
-4. Add `last_change_request_type` attribute to resource(create, update, destroy)
-5. Add `change_request_transaction_id` attribute to use for bulk change requests
 
 ## Entity Relationship Diagram
 
