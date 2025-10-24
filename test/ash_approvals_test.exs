@@ -50,4 +50,19 @@ defmodule AshApprovalsTest do
            |> Ash.Query.filter(id == ^record.id)
            |> Ash.exists?()
   end
+
+  test "it allows approved changes" do
+    {:ok, record} =
+      Category
+      |> Ash.Changeset.new()
+      |> Ash.Changeset.put_context(:changes_approved?, true)
+      |> Ash.Changeset.for_create(:create, %{name: "Cat 1"})
+      |> Ash.create()
+
+    require Ash.Query
+
+    assert Category
+           |> Ash.Query.filter(id == ^record.id)
+           |> Ash.exists?()
+  end
 end
