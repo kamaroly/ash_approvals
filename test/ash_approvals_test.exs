@@ -18,7 +18,7 @@ defmodule AshApprovalsTest do
       update :approve do
         description "Approve an existing request and affect underlying datalayer"
         change set_attribute(:status, :approved)
-        change AshApprovals.Changes.ApplyChange
+        change AshApprovals.Changes.ProccessApproved
       end
     end
 
@@ -89,7 +89,6 @@ defmodule AshApprovalsTest do
     {:ok, record} =
       Category
       |> Ash.Changeset.new()
-      |> Ash.Changeset.select([:name])
       |> Ash.Changeset.put_context(:changes_approved?, true)
       |> Ash.Changeset.for_create(:create, %{name: "Cat 1"})
       |> Ash.create()
@@ -104,7 +103,7 @@ defmodule AshApprovalsTest do
   test "3. When a change request is approved it processes the change normally" do
     {:ok, record} =
       Category
-      |> Ash.Changeset.for_create(:create, %{name: "Cat 1"})
+      |> Ash.Changeset.for_create(:create, %{name: "Approved category"})
       |> Ash.create()
 
     # Approve the change requests
@@ -116,9 +115,6 @@ defmodule AshApprovalsTest do
       |> Ash.update()
 
     assert request.status == :approved
-    {:ok, record} = Ash.get(Category, record.id)
-
-    Ash.read_first(ChangeRequest) |> dbg()
-    Ash.get(Category, record.id) |> dbg()
+    assert Ash.read_first!(Category)
   end
 end

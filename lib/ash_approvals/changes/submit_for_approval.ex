@@ -15,13 +15,18 @@ defmodule AshApprovals.Changes.SubmitForApproval do
     Ash.Changeset.before_action(changeset, &submit_change_for_approval(&1, opts, context))
   end
 
+  @impl Ash.Resource.Change
+  def atomic(changeset, opts, context) do
+    {:ok, change(changeset, opts, context)}
+  end
+
   defp submit_change_for_approval(changeset, opts, context) do
     # 1. Submit Request
     request_approval!(changeset, opts, context)
-    # 2. prevent
-    params = struct(changeset.data.__struct__, changeset.attributes)
 
-    Ash.Changeset.set_result(changeset, {:ok, params})
+    # 2. Prevent submitting in underlying datalayer
+    records = struct(changeset.data.__struct__, changeset.attributes)
+    Ash.Changeset.set_result(changeset, {:ok, records})
   end
 
   defp request_approval!(changeset, opts, context) do
@@ -38,6 +43,7 @@ defmodule AshApprovals.Changes.SubmitForApproval do
 
   defp serialize_changeset(changeset) do
     changeset
+    |> Ash.Changeset.put_context(:changes_approved?, true)
     |> :erlang.term_to_binary()
     |> Base.encode64()
   end
