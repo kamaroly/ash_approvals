@@ -2,9 +2,13 @@ defmodule AshApprovals.Changes.SubmitForApproval do
   use Ash.Resource.Change
 
   @doc """
-  If changes have been approved, then continue the normal journey and
-  have it persisted in the database, otherwise, take the change
-  through approval process first
+  Modifies the normal behaviour and only save to the database when
+  it is flagged as approved. Otherwise move it to the change
+  request table which will initiate steps for the change
+  requests
+
+  1. If approved for change, proceed as normal
+  2. If not approved, don't persist in the database
   """
   @impl Ash.Resource.Change
   def change(%{context: %{changes_approved?: true}} = changeset, _opts, _context) do
@@ -23,15 +27,18 @@ defmodule AshApprovals.Changes.SubmitForApproval do
   defp submit_change_for_approval(changeset, opts, context) do
     # 1. Submit Request
     request_approval!(changeset, opts, context)
-
     # 2. Prevent submitting in underlying datalayer
     records = struct(changeset.data.__struct__, changeset.attributes)
     Ash.Changeset.set_result(changeset, {:ok, records})
   end
 
   defp request_approval!(changeset, opts, context) do
+    dbg(changeset.action.name)
+
     params = %{
-      data: serialize_changeset(changeset),
+      changeset: serialize_changeset(changeset),
+      action_type: changeset.action_type,
+      action: changeset.action.name,
       status: :pending,
       context: context,
       opts: Enum.into(opts, %{})
@@ -39,6 +46,7 @@ defmodule AshApprovals.Changes.SubmitForApproval do
 
     # TODO: The change request resource should be configurabl
     Ash.create!(AshApprovalsTest.ChangeRequest, params, Ash.Scope.to_opts(context))
+    |> dbg()
   end
 
   defp serialize_changeset(changeset) do

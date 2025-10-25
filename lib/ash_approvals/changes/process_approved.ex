@@ -11,8 +11,10 @@ defmodule AshApprovals.Changes.ProccessApproved do
     {:ok, change(changeset, opts, context)}
   end
 
+  # 1. Decode the stored into an original changeset
+  # 2. apply changes
   defp process_approved(_changeset, record) do
-    record.data
+    record.changeset
     |> binary_string_to_changeset()
     |> apply_changes!()
 
@@ -25,10 +27,11 @@ defmodule AshApprovals.Changes.ProccessApproved do
     |> :erlang.binary_to_term()
   end
 
+  # Apply the changes
   defp apply_changes!(%{action_type: :create} = changeset) do
     action = changeset.action
     attributes = changeset.attributes
-    params = get_params(attributes)
+    params = get_attributes(attributes)
     context = [context: %{changes_approved?: true}]
 
     changeset.data.__struct__
@@ -39,15 +42,15 @@ defmodule AshApprovals.Changes.ProccessApproved do
   defp apply_changes!(%{action_type: :update} = changeset) do
     action = changeset.action
     attributes = changeset.attributes
-    params = get_params(attributes)
+    params = get_attributes(attributes)
     context = [context: %{changes_approved?: true}]
 
-    changeset.data.__struct__
+    changeset.data
     |> Ash.Changeset.for_update(action, params, context)
     |> Ash.update!()
   end
 
-  defp get_params(attributes) do
+  defp get_attributes(attributes) do
     attributes
     |> Map.delete(:id)
     |> Map.delete(:inserted_at)

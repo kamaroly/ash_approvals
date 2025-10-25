@@ -12,7 +12,7 @@ defmodule AshApprovalsTest do
     end
 
     actions do
-      default_accept [:data, :context, :opts, :status]
+      default_accept [:changeset, :context, :opts, :status, :action, :action_type]
       defaults [:create, :read, :update, :destroy]
 
       update :approve do
@@ -24,10 +24,12 @@ defmodule AshApprovalsTest do
 
     attributes do
       uuid_primary_key :id
-      attribute :data, :string, allow_nil?: false
+      attribute :changeset, :string, allow_nil?: false
       attribute :context, :map, allow_nil?: false
       attribute :opts, :map, allow_nil?: false
       attribute :status, :atom, default: :pending
+      attribute :action, :atom, allow_nil?: false
+      attribute :action_type, :atom, allow_nil?: false
       timestamps()
     end
   end
