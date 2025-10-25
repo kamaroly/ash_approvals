@@ -16,6 +16,7 @@ defmodule AshApprovals.Changes.SubmitForApproval do
   end
 
   def change(changeset, opts, context) do
+    dbg(changeset)
     Ash.Changeset.before_action(changeset, &submit_change_for_approval(&1, opts, context))
   end
 
@@ -28,13 +29,17 @@ defmodule AshApprovals.Changes.SubmitForApproval do
     # 1. Submit Request
     request_approval!(changeset, opts, context)
     # 2. Prevent submitting in underlying datalayer
-    records = struct(changeset.data.__struct__, changeset.attributes)
-    Ash.Changeset.set_result(changeset, {:ok, records})
+    result = build_result(changeset)
+    Ash.Changeset.set_result(changeset, {:ok, result})
   end
 
-  defp request_approval!(changeset, opts, context) do
-    dbg(changeset.action.name)
+  defp build_result(%{action_type: :create} = changeset) do
+    struct(changeset.data.__struct__, changeset.attributes)
+  end
 
+  defp build_result(changeset), do: changeset.data
+
+  defp request_approval!(changeset, opts, context) do
     params = %{
       changeset: serialize_changeset(changeset),
       action_type: changeset.action_type,
@@ -51,7 +56,6 @@ defmodule AshApprovals.Changes.SubmitForApproval do
 
   defp serialize_changeset(changeset) do
     changeset
-    |> Ash.Changeset.put_context(:changes_approved?, true)
     |> :erlang.term_to_binary()
     |> Base.encode64()
   end

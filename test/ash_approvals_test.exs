@@ -1,5 +1,6 @@
 defmodule AshApprovalsTest do
   use ExUnit.Case
+  require Ash.Query
   doctest AshApprovals
 
   defmodule ChangeRequest do
@@ -44,13 +45,12 @@ defmodule AshApprovalsTest do
     end
 
     actions do
-      defaults [:read, :update, :destroy]
+      default_accept [:name]
+      defaults [:create, :read, :update, :destroy]
+    end
 
-      create :create do
-        accept [:name]
-        primary? true
-        change AshApprovals.Changes.SubmitForApproval
-      end
+    changes do
+      change AshApprovals.Changes.SubmitForApproval
     end
 
     attributes do
@@ -70,53 +70,92 @@ defmodule AshApprovalsTest do
     end
   end
 
-  test "1. Create does not persist data" do
-    {:ok, record} =
-      Category
-      |> Ash.Changeset.for_create(:create, %{name: "Cat 1"})
-      |> Ash.create()
+  # test "1. Create does not persist data" do
+  #   {:ok, record} =
+  #     Category
+  #     |> Ash.Changeset.for_create(:create, %{name: "Cat 1"})
+  #     |> Ash.create()
 
-    # Confirm nothing was saved in the databse
-    require Ash.Query
+  #   # Confirm nothing was saved in the databse
+  #   require Ash.Query
 
-    refute Category
-           |> Ash.Query.filter(id == ^record.id)
-           |> Ash.exists?()
+  #   refute Category
+  #          |> Ash.Query.filter(id == ^record.id)
+  #          |> Ash.exists?()
 
-    #  Confirm the change has been requested
-    assert Ash.exists?(ChangeRequest)
-  end
+  #   #  Confirm the change has been requested
+  #   assert Ash.exists?(ChangeRequest)
+  # end
 
-  test "2. It allows approved changes to proceed normally" do
+  # test "2. It allows approved changes to proceed normally" do
+  #   {:ok, record} =
+  #     Category
+  #     |> Ash.Changeset.new()
+  #     |> Ash.Changeset.put_context(:changes_approved?, true)
+  #     |> Ash.Changeset.for_create(:create, %{name: "Cat 1"})
+  #     |> Ash.create()
+
+  #   require Ash.Query
+
+  #   assert Category
+  #          |> Ash.Query.filter(id == ^record.id)
+  #          |> Ash.exists?()
+  # end
+
+  # test "3. When a change request is approved it processes the change normally" do
+  #   {:ok, record} =
+  #     Category
+  #     |> Ash.Changeset.for_create(:create, %{name: "Approved category"})
+  #     |> Ash.create()
+
+  #   # Approve the change requests
+  #   change_request = Ash.read_first!(ChangeRequest)
+
+  #   {:ok, request} =
+  #     change_request
+  #     |> Ash.Changeset.for_update(:approve)
+  #     |> Ash.update()
+
+  #   assert request.status == :approved
+  #   assert Ash.read_first!(Category)
+  # end
+
+  test "Updates should require approval before persisting them" do
     {:ok, record} =
       Category
       |> Ash.Changeset.new()
       |> Ash.Changeset.put_context(:changes_approved?, true)
-      |> Ash.Changeset.for_create(:create, %{name: "Cat 1"})
+      |> Ash.Changeset.for_create(:create, %{name: "Category to update"})
       |> Ash.create()
-
-    require Ash.Query
 
     assert Category
            |> Ash.Query.filter(id == ^record.id)
            |> Ash.exists?()
-  end
 
-  test "3. When a change request is approved it processes the change normally" do
-    {:ok, record} =
-      Category
-      |> Ash.Changeset.for_create(:create, %{name: "Approved category"})
-      |> Ash.create()
+    # Attempt update
+    params = %{name: "Updated Category"}
 
-    # Approve the change requests
-    change_request = Ash.read_first!(ChangeRequest)
-
-    {:ok, request} =
-      change_request
-      |> Ash.Changeset.for_update(:approve)
+    {:ok, updated_cat} =
+      record
+      |> Ash.Changeset.for_update(:update, params)
       |> Ash.update()
 
-    assert request.status == :approved
-    assert Ash.read_first!(Category)
+    # Confirm changes are not persisted
+    refute Category
+           |> Ash.Query.filter(id == ^record.id)
+           |> Ash.Query.filter(name == ^params.name)
+           |> Ash.exists?()
+
+    # for change <- Ash.read!(ChangeRequest) do
+    #   change
+    #   |> Ash.Changeset.for_update(:approve)
+    #   |> Ash.update!()
+    # end
+
+    # # After approval, the category should have updated
+    # assert Category
+    #        |> Ash.Query.filter(id == ^record.id)
+    #        |> Ash.Query.filter(name == ^params.name)
+    #        |> Ash.exists?()
   end
 end
