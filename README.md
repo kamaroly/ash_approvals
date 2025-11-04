@@ -2,6 +2,10 @@
 
 Extension to add four eye principles, two-man rule, dual control or what is known as maker-checker to you Ash Resources
 
+## PENDING ITEMS TO FIX 
+
+1. Fix destroy actions that are not intercepted 
+
 
 ## How It works
 
@@ -18,6 +22,16 @@ Steps:
 7. If one of the approvers reject the change request, then stop there
 8. Notify the initiator
 
+## WARNING 
+
+THIS EXTENSION DISABLES ATOMIC UPDATES AND DESTROY ON YOUR ACTION. You can enable them, but manually set them in the actions using `require_atomic?` to `false`.
+To disable atomic updates use:
+
+```
+ash_approval do
+  disable_atomic? true
+end
+```
 
 ## Entity Relationship Diagram
 

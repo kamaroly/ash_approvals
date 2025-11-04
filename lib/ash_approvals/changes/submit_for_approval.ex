@@ -7,6 +7,8 @@ defmodule AshApprovals.Changes.SubmitForApproval do
   end
 
   def change(changeset, opts, context) do
+    dbg(changeset)
+
     changeset
     |> Ash.Changeset.before_action(&submit_change_for_approval(&1, opts, context))
   end
