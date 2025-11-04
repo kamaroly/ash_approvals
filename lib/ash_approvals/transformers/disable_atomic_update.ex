@@ -10,18 +10,21 @@ defmodule AshApprovals.Transformers.DisableAtomicUpdate do
     actions = Map.get(dsl_state, actions_path, %{entities: []})
     entities = actions.entities
 
-    updated_entities =
-      Enum.map(entities, fn
-        %{type: :update} = action ->
-          %{action | require_atomic?: false}
-
-        other ->
-          other
-      end)
+    updated_entities = Enum.map(entities, &disable_require_atomic/1)
 
     updated_actions = %{actions | entities: updated_entities}
     updated_dsl_state = %{dsl_state | actions_path => updated_actions}
 
     {:ok, updated_dsl_state}
   end
+
+  defp disable_require_atomic(%{type: :update} = action) do
+    %{action | require_atomic?: false}
+  end
+
+  defp disable_require_atomic(%{type: :destroy} = action) do
+    %{action | require_atomic?: false}
+  end
+
+  defp disable_require_atomic(action), do: action
 end
