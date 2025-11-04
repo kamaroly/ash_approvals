@@ -3,42 +3,11 @@ defmodule AshApprovalsTest do
   require Ash.Query
   doctest AshApprovals
 
-  defmodule ChangeRequest do
-    use Ash.Resource,
-      domain: AshApprovalsTest.Domain,
-      data_layer: Ash.DataLayer.Ets
-
-    ets do
-      table :change_requests
-    end
-
-    actions do
-      default_accept [:changeset, :context, :opts, :status, :action, :action_type]
-      defaults [:create, :read, :update, :destroy]
-
-      update :approve do
-        description "Approve an existing request and affect underlying datalayer"
-        change set_attribute(:status, :approved)
-        change AshApprovals.Changes.ProccessApproved
-      end
-    end
-
-    attributes do
-      uuid_primary_key :id
-      attribute :changeset, :string, allow_nil?: false
-      attribute :context, :map, allow_nil?: false
-      attribute :opts, :map, allow_nil?: false
-      attribute :status, :atom, default: :pending
-      attribute :action, :atom, allow_nil?: false
-      attribute :action_type, :atom, allow_nil?: false
-      timestamps()
-    end
-  end
-
   defmodule Category do
     use Ash.Resource,
       domain: AshApprovalsTest.Domain,
-      data_layer: Ash.DataLayer.Ets
+      data_layer: Ash.DataLayer.Ets,
+      extensions: [AshApprovals]
 
     ets do
       table :categories
@@ -47,10 +16,6 @@ defmodule AshApprovalsTest do
     actions do
       default_accept [:name]
       defaults [:create, :read, :update, :destroy]
-    end
-
-    changes do
-      change AshApprovals.Changes.SubmitForApproval
     end
 
     attributes do
@@ -70,37 +35,16 @@ defmodule AshApprovalsTest do
     end
   end
 
-  # test "1. Create does not persist data" do
-  #   {:ok, record} =
-  #     Category
-  #     |> Ash.Changeset.for_create(:create, %{name: "Cat 1"})
-  #     |> Ash.create()
-
-  #   # Confirm nothing was saved in the databse
-  #   require Ash.Query
-
-  #   refute Category
-  #          |> Ash.Query.filter(id == ^record.id)
-  #          |> Ash.exists?()
-
-  #   #  Confirm the change has been requested
-  #   assert Ash.exists?(ChangeRequest)
-  # end
-
-  # test "2. It allows approved changes to proceed normally" do
-  #   {:ok, record} =
-  #     Category
-  #     |> Ash.Changeset.new()
-  #     |> Ash.Changeset.put_context(:changes_approved?, true)
-  #     |> Ash.Changeset.for_create(:create, %{name: "Cat 1"})
-  #     |> Ash.create()
-
-  #   require Ash.Query
-
-  #   assert Category
-  #          |> Ash.Query.filter(id == ^record.id)
-  #          |> Ash.exists?()
-  # end
+  defp get_update_actions(resource) do
+    resource
+    |> Ash.Resource.Info.actions()
+    |> Enum.filter(fn action ->
+      case action do
+        %Ash.Resource.Actions.Update{} -> true
+        _ -> false
+      end
+    end)
+  end
 
   # test "3. When a change request is approved it processes the change normally" do
   #   {:ok, record} =
@@ -135,7 +79,7 @@ defmodule AshApprovalsTest do
     # Attempt update
     params = %{name: "Updated Category"}
 
-    {:ok, updated_cat} =
+    {:ok, _updated_cat} =
       record
       |> Ash.Changeset.for_update(:update, params)
       |> Ash.update()

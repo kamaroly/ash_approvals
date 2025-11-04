@@ -1,18 +1,8 @@
 defmodule AshApprovals do
-  @moduledoc """
-  Documentation for `AshApprovals`.
-  """
+  @transformers [
+    AshApprovals.Transformers.DisableAtomicUpdate,
+    AshApprovals.Transformers.AddSubmitForApprovalChange
+  ]
 
-  @doc """
-  Hello world.
-
-  ## Examples
-
-      iex> AshApprovals.hello()
-      :world
-
-  """
-  def hello do
-    :world
-  end
+  use Spark.Dsl.Extension, transformers: @transformers
 end

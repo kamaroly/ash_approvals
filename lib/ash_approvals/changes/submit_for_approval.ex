@@ -1,33 +1,35 @@
 defmodule AshApprovals.Changes.SubmitForApproval do
   use Ash.Resource.Change
 
-  @doc """
-  Modifies the normal behaviour and only save to the database when
-  it is flagged as approved. Otherwise move it to the change
-  request table which will initiate steps for the change
-  requests
-
-  1. If approved for change, proceed as normal
-  2. If not approved, don't persist in the database
-  """
   @impl Ash.Resource.Change
   def change(%{context: %{changes_approved?: true}} = changeset, _opts, _context) do
     changeset
   end
 
   def change(changeset, opts, context) do
-    dbg(changeset)
-    Ash.Changeset.before_action(changeset, &submit_change_for_approval(&1, opts, context))
+    changeset
+    |> Ash.Changeset.before_action(&submit_change_for_approval(&1, opts, context))
   end
 
   @impl Ash.Resource.Change
   def atomic(changeset, opts, context) do
-    {:ok, change(changeset, opts, context)}
+    if is_atomic_update?(changeset) do
+      {:not_atomic,
+       "Cannot perform AshApproval atomically. " <>
+         "You need to set `require_atomic?` to `false` on your update actions."}
+    else
+      {:ok, change(changeset, opts, context)}
+    end
+  end
+
+  defp is_atomic_update?(changeset) do
+    changeset.action_type == :update and Enum.empty?(changeset.atomics) == false
   end
 
   defp submit_change_for_approval(changeset, opts, context) do
     # 1. Submit Request
     request_approval!(changeset, opts, context)
+
     # 2. Prevent submitting in underlying datalayer
     result = build_result(changeset)
     Ash.Changeset.set_result(changeset, {:ok, result})
@@ -50,8 +52,7 @@ defmodule AshApprovals.Changes.SubmitForApproval do
     }
 
     # TODO: The change request resource should be configurabl
-    Ash.create!(AshApprovalsTest.ChangeRequest, params, Ash.Scope.to_opts(context))
-    |> dbg()
+    Ash.create!(AshApprovals.Resources.ChangeRequest, params, Ash.Scope.to_opts(context))
   end
 
   defp serialize_changeset(changeset) do
