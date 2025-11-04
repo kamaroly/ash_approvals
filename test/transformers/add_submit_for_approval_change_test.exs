@@ -33,15 +33,14 @@ defmodule Transformers.AddSubmitForApprovalChangeTest do
   end
 
   test "1. Create does not persist data" do
-    {:ok, record} =
-      Category
-      |> Ash.Changeset.for_create(:create, %{name: "Cat 1"})
-      |> Ash.create()
+    {:ok, record} = Ash.create(Category, %{name: Ash.UUIDv7.generate()})
+
+    dbg(record)
 
     # Confirm nothing was saved in the databse
 
     refute Category
-           |> Ash.Query.filter(id == ^record.id)
+           |> Ash.Query.filter(name == ^record.name)
            |> Ash.exists?()
 
     #  Confirm the change has been requested
