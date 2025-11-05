@@ -35,13 +35,14 @@ defmodule Changes.ProcessApprovedTest do
 
   test "It effects changes when approved" do
     params = %{name: "Approved category"}
-
     {:ok, record} = Ash.create(Category, params)
+
+    refute Category
+           |> Ash.Query.filter(name == ^params.name)
+           |> Ash.exists?()
 
     # Approve the change requests
     {:ok, requests} = Ash.read(AshApprovals.Resources.ChangeRequest)
-
-    dbg(requests)
 
     for change <- requests do
       {:ok, request} =

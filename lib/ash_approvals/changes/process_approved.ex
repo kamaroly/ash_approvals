@@ -1,19 +1,24 @@
 defmodule AshApprovals.Changes.ProccessApproved do
   use Ash.Resource.Change
 
+  @approved_context %{changes_approved?: true}
+
   @impl Ash.Resource.Change
-  def change(changeset, _opts, _context) do
-    Ash.Changeset.after_action(changeset, &process_approved/2)
+  def change(%{action: %{name: :approve}} = changeset, _opts, _context) do
+    Ash.Changeset.after_action(changeset, &process_change_request/2)
   end
+
+  def change(changeset, _opts, _context), do: changeset
 
   @impl Ash.Resource.Change
   def atomic(changeset, opts, context) do
     {:ok, change(changeset, opts, context)}
   end
 
-  # 1. Decode the stored into an original changeset
-  # 2. apply changes
-  defp process_approved(_changeset, record) do
+  defp process_change_request(_changeset, record) do
+    # 1. Decode the stored into an original changeset
+    # 2. apply changes
+
     record.changeset
     |> binary_string_to_changeset()
     |> apply_changes!()
@@ -29,25 +34,31 @@ defmodule AshApprovals.Changes.ProccessApproved do
 
   # Apply the changes
   defp apply_changes!(%{action_type: :create} = changeset) do
-    action = changeset.action
-    attributes = changeset.attributes
-    params = get_attributes(attributes)
-    context = [context: %{changes_approved?: true}]
+    params = get_attributes(changeset.attributes)
 
     changeset.data.__struct__
-    |> Ash.Changeset.for_create(action, params, context)
+    |> Ash.Changeset.new()
+    |> Ash.Changeset.put_context(:changes_approved?, true)
+    |> Ash.Changeset.for_create(changeset.action.name, params)
     |> Ash.create!()
   end
 
   defp apply_changes!(%{action_type: :update} = changeset) do
-    action = changeset.action
-    attributes = changeset.attributes
-    params = get_attributes(attributes)
-    context = [context: %{changes_approved?: true}]
+    params = get_attributes(changeset.attributes)
 
     changeset.data
-    |> Ash.Changeset.for_update(action, params, context)
+    |> Ash.Changeset.new()
+    |> Ash.Changeset.put_context(:changes_approved?, true)
+    |> Ash.Changeset.for_update(changeset.action.name, params)
     |> Ash.update!()
+  end
+
+  defp apply_changes!(%{action_type: :destroy} = changeset) do
+    changeset.data
+    |> Ash.Changeset.new()
+    |> Ash.Changeset.put_context(:changes_approved?, true)
+    |> Ash.Changeset.for_destroy(changeset.action.name)
+    |> Ash.destroy!()
   end
 
   defp get_attributes(attributes) do

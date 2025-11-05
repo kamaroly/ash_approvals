@@ -52,13 +52,13 @@ defmodule Changes.SubmitForApprovalTest do
     test "It should intercept create actions" do
       {:ok, record} =
         Category
-        |> Ash.Changeset.for_create(:create, %{name: "Cat 1"})
+        |> Ash.Changeset.for_create(:create, %{name: "Cat 1 #{Ash.UUIDv7.generate()}"})
         |> Ash.create()
 
       # Confirm nothing was saved in the databse
 
       refute Category
-             |> Ash.Query.filter(id == ^record.id)
+             |> Ash.Query.filter(name == ^record.name)
              |> Ash.exists?()
 
       #  Confirm the change has been requested
@@ -103,12 +103,9 @@ defmodule Changes.SubmitForApprovalTest do
              |> Ash.exists?()
 
       # Confirm that `set_result` prevent running underlying layer
-      fake_result = %Category{name: "Faked Results"}
-
       {:ok, fake_record} =
         record
         |> Ash.Changeset.for_destroy(:destroy)
-        # |> Ash.Changeset.set_result({:ok, record})
         |> Ash.destroy(return_destroyed?: true)
 
       # Confirm nothing changed in the database

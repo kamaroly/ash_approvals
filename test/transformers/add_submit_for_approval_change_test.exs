@@ -34,11 +34,7 @@ defmodule Transformers.AddSubmitForApprovalChangeTest do
 
   test "1. Create does not persist data" do
     {:ok, record} = Ash.create(Category, %{name: Ash.UUIDv7.generate()})
-
-    dbg(record)
-
     # Confirm nothing was saved in the databse
-
     refute Category
            |> Ash.Query.filter(name == ^record.name)
            |> Ash.exists?()
