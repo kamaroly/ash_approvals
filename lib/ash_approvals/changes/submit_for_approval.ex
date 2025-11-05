@@ -11,6 +11,11 @@ defmodule AshApprovals.Changes.SubmitForApproval do
     Ash.Changeset.set_result(changeset, {:ok, build_result(changeset)})
   end
 
+  @impl Ash.Resource.Change
+  def atomic(changeset, opts, context) do
+    {:ok, change(changeset, opts, context)}
+  end
+
   defp build_result(%{action_type: :create} = changeset) do
     struct(changeset.data.__struct__, changeset.attributes)
   end
