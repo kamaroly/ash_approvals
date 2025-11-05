@@ -1,8 +1,6 @@
 defmodule AshApprovals.Changes.ProccessApproved do
   use Ash.Resource.Change
 
-  @approved_context %{changes_approved?: true}
-
   @impl Ash.Resource.Change
   def change(%{action: %{name: :approve}} = changeset, _opts, _context) do
     Ash.Changeset.after_action(changeset, &process_change_request/2)

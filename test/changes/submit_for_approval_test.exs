@@ -88,7 +88,7 @@ defmodule Changes.SubmitForApprovalTest do
              |> Ash.exists?()
 
       # Confirm that `set_result` prevent running underlying layer
-      {:ok, fake_record} =
+      {:ok, _fake_record} =
         record
         |> Ash.Changeset.for_destroy(:destroy)
         |> Ash.destroy(return_destroyed?: true)
