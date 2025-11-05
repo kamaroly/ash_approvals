@@ -16,21 +16,6 @@ defmodule Changes.SubmitForApprovalTest do
     actions do
       default_accept [:name]
       defaults [:create, :read, :update, :destroy]
-
-      # destroy :destroy do
-      #   description "Destroy article and its comments"
-      #   # Make this action primary so that it can be called with Ash.destroy without
-      #   # having to mention the action to use
-      #   primary? true
-
-      #   # Before this action is executed, we'll need to delete corresponding
-      #   # comments
-      #   # change before_action(fn changeset, context ->
-      #   #          dbg("TESTING FOR DESTROYING")
-      #   #          # Continue with the change
-      #   #          changeset
-      #   #        end)
-      # end
     end
 
     attributes do
