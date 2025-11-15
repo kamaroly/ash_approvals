@@ -159,6 +159,65 @@ defmodule Workflows.WorkflowTest do
         status: :status
       })
       |> dbg()
+
+      # Create Workflow Steps for the template
+      # step1 = WorkflowSteps.create!(%{
+      #   template_id: expense_template.id,
+      #   step_order: 1,
+      #   step_name: "Manager Approval",
+      #   approver_type: "manager",
+      #   approval_mode: "sequential",
+      #   conditions: nil,
+      #   timeout_days: 3,
+      #   required: true
+      # })
+
+      # step2 = WorkflowSteps.create!(%{
+      #   template_id: expense_template.id,
+      #   step_order: 2,
+      #   step_name: "Finance Group Approval",
+      #   approver_type: "group",
+      #   approver_id: finance_group.id,
+      #   approval_mode: "parallel",
+      #   conditions: "{\"amount_gt\": 1000}",
+      #   timeout_days: 5,
+      #   required: true
+      # })
+
+      # # Create a Request
+      # request1 = Requests.create!(%{
+      #   requester_id: user2.id,
+      #   template_id: expense_template.id,
+      #   request_type: "initiate",
+      #   status: "pending",
+      #   current_step_id: step1.id,
+      #   request_data: %{"amount" => 1500, "description" => "Travel expenses"}
+      # })
+
+      # # Create Approvals for the request
+      # approval1 = Approvals.create!(%{
+      #   request_id: request1.id,
+      #   step_id: step1.id,
+      #   approver_id: user1.id,  # Alice as manager
+      #   decision: "approved",
+      #   comments: "Looks good"
+      # })
+
+      # approval2_bob = Approvals.create!(%{
+      #   request_id: request1.id,
+      #   step_id: step2.id,
+      #   approver_id: user2.id,
+      #   decision: "pending",
+      #   comments: nil
+      # })
+
+      # approval2_charlie = Approvals.create!(%{
+      #   request_id: request1.id,
+      #   step_id: step2.id,
+      #   approver_id: user3.id,
+      #   decision: "approved",
+      #   comments: "Approved by finance"
+      # })
     end
   end
 end
